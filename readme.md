@@ -24,6 +24,12 @@ Install the required libraries:
 python -m pip install -r requirements.txt
 ```
 
+Run the script / program :
+
+```
+python faucet.py
+```
+
 Read the explanation below!
 
 You can fill in your wallet address in the `address.txt` file.

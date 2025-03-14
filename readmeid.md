@@ -24,6 +24,12 @@ Install library yang dibutuhkan
 python -m pip install -r requirements.txt
 ```
 
+Jalankan script / program : 
+
+```
+python faucet.py
+```
+
 Baca penjelasan dibawah!
 
 Anda bisa mengisi address dari wallet yang anda gunakan di file `address.txt`
@@ -70,3 +76,4 @@ http://192.168.0.1:8888
 If you find my program useful, you can buy me a copy through the link below.
 
 [https://sociabuzz.com/fawwazthoerif/tribe](https://sociabuzz.com/fawwazthoerif/tribe)
+
