@@ -28,13 +28,13 @@ def generate_visitor_id():
 
 
 async def faucet(address, proxy):
-    url = "https://testnet.monad.xyz/api/faucet/claim"
+    url = "https://faucet-claim.monadinfra.com/"
     headers = {
         "Accept": "*/*",
         "Accept-Language": "en-US,en;q=0.9",
         "Connection": "keep-alive",
         "Content-Type": "application/json",
-        "Host": "testnet.monad.xyz",
+        "Host": "faucet-claim.monadinfra.com",
         "Origin": "https://testnet.monad.xyz",
         "Referer": "https://testnet.monad.xyz/",
         "sec-ch-ua": '"Not(A:Brand";v="99", "Google Chrome";v="133", "Chromium";v="133"',
@@ -45,7 +45,7 @@ async def faucet(address, proxy):
         "Sec-Fetch-Site": "same-origin",
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36",
     }
-    async with httpx.AsyncClient(headers=headers, proxy=proxy) as ses:
+    async with httpx.AsyncClient(headers=headers, proxy=proxy, timeout=300) as ses:
         timet = None
         token = None
         while True:
@@ -75,18 +75,24 @@ async def faucet(address, proxy):
                 message = res.json().get("message")
             except:
                 message = None
+            if message == "CloudFlare process failed":
+                log(f"{red}CloudFlare process failed")
+                continue
             if message == "reCAPTCHA process failed":
                 log(f"{red}reCAPTCHA process failed")
                 continue
             if message == "reCAPTCHA score too low":
                 log(f"{red}reCAPTCHA score too low")
                 continue
-            if message == "Success":
+            elif message == "Success":
                 log(f"{green}success claim faucet !")
                 break
-            if message == "Claimed already, Please try again later.":
+            elif message == "Claimed already, Please try again later.":
                 log(f"{yellow}already claimed  !")
                 break
+            else:
+                log(f"{yellow}{message}")
+                continue
 
 
 def get_proxy(i, p):
