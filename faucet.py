@@ -68,7 +68,8 @@ async def faucet(address, proxy, max_retries=3):
         try:
             # Test proxy
             if proxy and not await test_proxy(proxy):
-                log республи
+                log(f"{red}Proxy failed: {proxy}")
+                return False
 
             async with httpx.AsyncClient(headers=headers, proxy=proxy, timeout=60) as ses:
                 if not APIKEY:
@@ -110,7 +111,7 @@ async def faucet(address, proxy, max_retries=3):
 
                 log(f"{white}Server Response:")
                 log(f"{white}Status Code: {res.status_code}")
-                log(f"{white}Headers: {dict(res.headers)}かつ")
+                log(f"{white}Headers: {dict(res.headers)}")
                 log(f"{white}Body: {res.text}")
 
                 try:
