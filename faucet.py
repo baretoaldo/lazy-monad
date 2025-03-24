@@ -6,8 +6,6 @@ import string
 import asyncio
 import time
 from config import *
-from config import APIKEY
-from config import PROVIDER
 from src.service.twocaptcha import twocaptcha
 from src.service.anticaptcha import anticaptcha
 from src.service.capsolver import capsolver
@@ -19,6 +17,10 @@ green = Fore.LIGHTGREEN_EX
 yellow = Fore.LIGHTYELLOW_EX
 white = Fore.LIGHTWHITE_EX
 red = Fore.LIGHTRED_EX
+
+# Hardcode API key untuk testing
+APIKEY = "CAP-B595A36B146B771CA885034AF7EF3A75"
+PROVIDER = "capsolver"
 
 # Tambahkan AUTH_TOKEN di config.py jika ada
 try:
@@ -33,8 +35,10 @@ async def test_proxy(proxy):
     try:
         async with httpx.AsyncClient(proxy=proxy, timeout=10) as client:
             response = await client.get("https://api.ipify.org")
+            log(f"{white}Proxy test response: {response.status_code}")
             return response.status_code == 200
-    except:
+    except Exception as e:
+        log(f"{red}Proxy test failed: {str(e)}")
         return False
 
 async def faucet(address, proxy, max_retries=3):
@@ -56,38 +60,34 @@ async def faucet(address, proxy, max_retries=3):
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36",
     }
     
-    # Tambahkan header autentikasi jika AUTH_TOKEN tersedia
     if AUTH_TOKEN:
         headers["Authorization"] = f"Bearer {AUTH_TOKEN}"
         headers["X-Request-Verification-Token"] = AUTH_TOKEN
 
     for attempt in range(max_retries):
         try:
-            # Test proxy sebelum digunakan
+            # Test proxy
             if proxy and not await test_proxy(proxy):
-                log(f"{red}Proxy failed: {proxy}")
-                return False
+                log республи
 
             async with httpx.AsyncClient(headers=headers, proxy=proxy, timeout=60) as ses:
-                if not APIKEY or len(APIKEY) <= 0:
-                    log(f"{red}APIKEY is not set in config")
+                if not APIKEY:
+                    log(f"{red}APIKEY is not set")
                     return None
 
                 token = None
                 retry_captcha = 0
                 while retry_captcha < 3 and token is None:
                     try:
-                        if PROVIDER == "twocaptcha":
-                            _, token = await twocaptcha(APIKEY)
-                        elif PROVIDER == "anticaptcha":
-                            _, token = await anticaptcha(APIKEY)
-                        elif PROVIDER == "capsolver":
+                        log(f"{white}Attempting to get captcha token (try {retry_captcha + 1})")
+                        if PROVIDER == "capsolver":
                             _, token = await capsolver(APIKEY)
+                            log(f"{white}Capsolver token received: {token[:10]}...")  # Tampilkan sebagian token
                         else:
-                            log(f"{red}Invalid PROVIDER specified")
+                            log(f"{red}Unsupported PROVIDER: {PROVIDER}")
                             return None
                     except Exception as e:
-                        log(f"{red}Captcha service error: {str(e)}")
+                        log(f"{red}Capsolver error: {str(e)}")
                         retry_captcha += 1
                         await asyncio.sleep(2)
                         continue
@@ -102,6 +102,7 @@ async def faucet(address, proxy, max_retries=3):
                     "cloudFlareResponseToken": token,
                 }
 
+                log(f"{white}Sending request to faucet with data: {json.dumps(data)[:100]}...")
                 res = await http(ses=ses, url=url, data=json.dumps(data))
                 if res is None:
                     log(f"{yellow}No response received")
@@ -109,7 +110,7 @@ async def faucet(address, proxy, max_retries=3):
 
                 log(f"{white}Server Response:")
                 log(f"{white}Status Code: {res.status_code}")
-                log(f"{white}Headers: {dict(res.headers)}")
+                log(f"{white}Headers: {dict(res.headers)}かつ")
                 log(f"{white}Body: {res.text}")
 
                 try:
