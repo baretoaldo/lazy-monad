@@ -20,8 +20,22 @@ yellow = Fore.LIGHTYELLOW_EX
 white = Fore.LIGHTWHITE_EX
 red = Fore.LIGHTRED_EX
 
+# Tambahkan AUTH_TOKEN di config.py jika ada
+try:
+    from config import AUTH_TOKEN
+except ImportError:
+    AUTH_TOKEN = None
+
 def generate_visitor_id():
     return "".join(random.choices(string.digits + string.ascii_lowercase, k=32))
+
+async def test_proxy(proxy):
+    try:
+        async with httpx.AsyncClient(proxy=proxy, timeout=10) as client:
+            response = await client.get("https://api.ipify.org")
+            return response.status_code == 200
+    except:
+        return False
 
 async def faucet(address, proxy, max_retries=3):
     url = "https://faucet-claim.monadinfra.com/"
@@ -41,9 +55,19 @@ async def faucet(address, proxy, max_retries=3):
         "Sec-Fetch-Site": "same-origin",
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36",
     }
+    
+    # Tambahkan header autentikasi jika AUTH_TOKEN tersedia
+    if AUTH_TOKEN:
+        headers["Authorization"] = f"Bearer {AUTH_TOKEN}"
+        headers["X-Request-Verification-Token"] = AUTH_TOKEN
 
     for attempt in range(max_retries):
         try:
+            # Test proxy sebelum digunakan
+            if proxy and not await test_proxy(proxy):
+                log(f"{red}Proxy failed: {proxy}")
+                return False
+
             async with httpx.AsyncClient(headers=headers, proxy=proxy, timeout=60) as ses:
                 if not APIKEY or len(APIKEY) <= 0:
                     log(f"{red}APIKEY is not set in config")
@@ -83,7 +107,6 @@ async def faucet(address, proxy, max_retries=3):
                     log(f"{yellow}No response received")
                     continue
 
-                # Menampilkan respon server lengkap
                 log(f"{white}Server Response:")
                 log(f"{white}Status Code: {res.status_code}")
                 log(f"{white}Headers: {dict(res.headers)}")
@@ -94,7 +117,10 @@ async def faucet(address, proxy, max_retries=3):
                 except:
                     message = "Invalid JSON response"
 
-                if "failed" in message.lower():
+                if "unauthorized" in message.lower():
+                    log(f"{red}Authentication failed: {message}")
+                    return False
+                elif "failed" in message.lower():
                     log(f"{red}{message}")
                     await asyncio.sleep(2)
                     continue
