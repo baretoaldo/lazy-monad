@@ -97,6 +97,7 @@ async def faucet(address, proxy, max_retries=3):
                     log(f"{red}Failed to get captcha token after {retry_captcha} attempts")
                     return None
 
+                # Struktur payload sesuai contoh
                 data = {
                     "address": address,
                     "visitorId": generate_visitor_id(),
