@@ -83,6 +83,12 @@ async def faucet(address, proxy, max_retries=3):
                     log(f"{yellow}No response received")
                     continue
 
+                # Menampilkan respon server lengkap
+                log(f"{white}Server Response:")
+                log(f"{white}Status Code: {res.status_code}")
+                log(f"{white}Headers: {dict(res.headers)}")
+                log(f"{white}Body: {res.text}")
+
                 try:
                     message = res.json().get("message", "Unknown response")
                 except:
@@ -150,7 +156,7 @@ async def main():
         result = await faucet(address=address, proxy=proxy)
         if result:
             proxy_index += 1
-        await asyncio.sleep(2)  # Delay between addresses
+        await asyncio.sleep(2)
 
 if __name__ == "__main__":
     try:
